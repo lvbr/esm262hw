@@ -1,0 +1,109 @@
+---
+title: "Assignment1"
+author: "Lina Barbosa"
+subtitle: "ESM 262"
+date: "4/26/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+```
+
+```{r load packages}
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(ggExtra)
+  
+})
+
+```
+
+```{r load data}
+other_data = data.frame(month=seq(1,12),
+                      month_names=month.abb,
+                      season = c(1,1,2,2,2,3,3,3,4,4,4,1))
+
+climate=read.table("clim.txt", header=T) %>% 
+  left_join(other_data) %>% 
+  mutate(temp = (tmin+tmax)/2) 
+  
+
+```
+
+```{r precipitation boxplot}
+ggplot(data=climate, aes(x=as.factor(month), y=rain)) +
+  geom_boxplot(color="darkblue") +
+  stat_summary(geom="point", fun.y = "mean", color="red") +
+  xlab("Month") +
+  ylab("Precipitation") +
+  theme_bw() +
+  removeGrid(x=TRUE, y=TRUE) +
+  scale_x_discrete(labels=month.abb)
+```
+```{r temperature boxplot}
+ggplot(data=climate, aes(x = as.factor(month), y = temp)) +
+  geom_boxplot(fill= "aquamarine3", color = "black") +
+  stat_summary(geom="point", fun.y = "mean", color="red") +
+  xlab("Month") +
+  ylab("Temperature") +
+  theme_bw() +
+  removeGrid(x=TRUE, y=TRUE) + 
+  scale_x_discrete(labels=month.abb)
+```
+```{r}
+rain_year <- climate %>% 
+  group_by(year) %>% 
+  summarise(total_rain = sum(rain))
+
+ggplot(data = rain_year, aes(x = year, y = total_rain)) + 
+  geom_line(color = "gray63") +
+  geom_point(color = "dodgerblue4") +
+  xlab("Year") +
+  ylab("Total precipitation") +
+  theme_bw() +
+  removeGrid(x=TRUE, y=TRUE) 
+```
+The driest year was `r rain_year$year[rain_year$total_rain == min(rain_year$total_rain)]` with a total precipitation of `r min(rain_year$total_rain)`. The wettest was `r rain_year$year[rain_year$total_rain == max(rain_year$total_rain)]` with a total precipitation of `r max(rain_year$total_rain)`.
+
+
+
+
+# A wet day in the tropics 
+
+![lina](./rainforest.jpg)
+```{r seasons}
+rain_season <- climate %>% 
+  group_by(season) %>% 
+  summarise(total_rain = sum(rain))
+
+ggplot(data = rain_season, aes(x = as.character(season), y = total_rain)) + 
+  geom_col(fill = "gray63") +
+  xlab("Season") +
+  ylab("Total precipitation") +
+  theme_bw() +
+  removeGrid(x=TRUE, y=TRUE) +
+  scale_x_discrete(labels = c("Winter","Spring","Summer","Fall"))
+```
+```{r seasons}
+climate %>% 
+  group_by(year, season) %>% 
+  summarise(total_rain = sum(rain),
+            temp = mean(temp)) -> rain_temp
+
+temp <- rain_temp %>% 
+  filter(season == 3) %>% 
+  select(year, temp)
+
+rain_temp %>% 
+  filter(season == 1) %>% 
+  select(year, total_rain) %>% 
+  left_join(temp) %>% 
+  ggplot(aes(x = total_rain, y = temp, color = year)) + 
+  geom_point() +
+  theme_bw() +
+  removeGrid(x=TRUE, y=TRUE) +
+  labs(x = "my equiiiis", y = "mi yyyyy")
+
+  
+```
