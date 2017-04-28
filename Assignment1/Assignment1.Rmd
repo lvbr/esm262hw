@@ -3,7 +3,9 @@ title: "Assignment1"
 author: "Lina Barbosa"
 subtitle: "ESM 262"
 date: "4/26/2017"
-output: 
+output:
+  slidy_presentation:
+    fig_caption: yes
   pdf_document:
     fig_caption: yes
     toc: yes
