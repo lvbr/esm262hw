@@ -3,14 +3,17 @@ title: "Assignment1"
 author: "Lina Barbosa"
 subtitle: "ESM 262"
 date: "4/26/2017"
-output: pdf_document
+output: 
+  pdf_document:
+    fig_caption: yes
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE)
 ```
 
-```{r load packages}
+```{r load packages, echo=FALSE}
 suppressPackageStartupMessages({
   library(tidyverse)
   library(ggExtra)
@@ -18,6 +21,10 @@ suppressPackageStartupMessages({
 })
 
 ```
+
+# Loading Data
+
+The data set climate was modified to include month names and separate years by seasons
 
 ```{r load data}
 other_data = data.frame(month=seq(1,12),
@@ -27,11 +34,15 @@ other_data = data.frame(month=seq(1,12),
 climate=read.table("clim.txt", header=T) %>% 
   left_join(other_data) %>% 
   mutate(temp = (tmin+tmax)/2) 
-  
-
 ```
 
-```{r precipitation boxplot}
+\clearpage
+
+# Task 1 
+
+Precipitation and average temperature by month
+
+```{r task1, fig.cap = "Precipitation by moth"}
 ggplot(data=climate, aes(x=as.factor(month), y=rain)) +
   geom_boxplot(color="darkblue") +
   stat_summary(geom="point", fun.y = "mean", color="red") +
@@ -41,7 +52,10 @@ ggplot(data=climate, aes(x=as.factor(month), y=rain)) +
   removeGrid(x=TRUE, y=TRUE) +
   scale_x_discrete(labels=month.abb)
 ```
-```{r temperature boxplot}
+
+\clearpage
+
+```{r task2, fig.cap = "Temperature by month"}
 ggplot(data=climate, aes(x = as.factor(month), y = temp)) +
   geom_boxplot(fill= "aquamarine3", color = "black") +
   stat_summary(geom="point", fun.y = "mean", color="red") +
@@ -51,7 +65,14 @@ ggplot(data=climate, aes(x = as.factor(month), y = temp)) +
   removeGrid(x=TRUE, y=TRUE) + 
   scale_x_discrete(labels=month.abb)
 ```
-```{r}
+
+\clearpage
+
+# Task 2 
+
+Find wettest and driest years
+
+```{r fig.cap = "Total precipitation by year"}
 rain_year <- climate %>% 
   group_by(year) %>% 
   summarise(total_rain = sum(rain))
@@ -64,15 +85,32 @@ ggplot(data = rain_year, aes(x = year, y = total_rain)) +
   theme_bw() +
   removeGrid(x=TRUE, y=TRUE) 
 ```
+
+
+
 The driest year was `r rain_year$year[rain_year$total_rain == min(rain_year$total_rain)]` with a total precipitation of `r min(rain_year$total_rain)`. The wettest was `r rain_year$year[rain_year$total_rain == max(rain_year$total_rain)]` with a total precipitation of `r max(rain_year$total_rain)`.
 
+\clearpage
 
+# Task 3 
 
+Illustrate what a wet and dry year might look like for the ecosystem of your choice
 
-# A wet day in the tropics 
+## A wet day in the tropics
 
-![lina](./rainforest.jpg)
-```{r seasons}
+![Amazon Tropical Rain Forest](./rainforest.jpg)
+
+\clearpage
+
+## A dry day in La Guajira desert 
+![La Guajira](./guajira.jpg) 
+
+\clearpage
+
+# Task 4
+Find wettest and driest seasons  
+
+```{r seasons, fig.cap = "Total precipitation by seasons"}
 rain_season <- climate %>% 
   group_by(season) %>% 
   summarise(total_rain = sum(rain))
@@ -85,7 +123,17 @@ ggplot(data = rain_season, aes(x = as.character(season), y = total_rain)) +
   removeGrid(x=TRUE, y=TRUE) +
   scale_x_discrete(labels = c("Winter","Spring","Summer","Fall"))
 ```
-```{r seasons}
+
+
+The wettest season is winter and the driest is summer 
+
+\clearpage
+
+#Task 5 
+
+Graph the relationship between winter precipitation and summer temperature
+
+```{r fig.cap = "Total winter precipitation vs Average summer temperature"}
 climate %>% 
   group_by(year, season) %>% 
   summarise(total_rain = sum(rain),
@@ -103,7 +151,7 @@ rain_temp %>%
   geom_point() +
   theme_bw() +
   removeGrid(x=TRUE, y=TRUE) +
-  labs(x = "my equiiiis", y = "mi yyyyy")
-
-  
+  labs(x = "Winter Precipitation", y = "Summer Temperature")
 ```
+
+For the period 1942 to 2016, there is no obvious relationship between the total precipitation in winter and the average summer temperature.
