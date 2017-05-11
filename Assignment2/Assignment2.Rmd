@@ -1,0 +1,35 @@
+---
+title: "Assignment2"
+author: "Lina Barbosa"
+date: "5/10/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# 1. Loading Data
+
+```{r}
+gaz_raw <- read_delim("./CA_Features_20170401.zip", delim="|", col_types = cols())
+
+```
+
+# 2. Create gaz tibble
+
+```{r}
+gaz <- gaz_raw %>% 
+  select(FEATURE_ID = 1,
+         starts_with("FEATURE"),
+         STATE_ALPHA,
+         COUNTY_NAME,
+         ends_with("DEC"),
+         ELEV_IN_M,
+         MAP_NAME,
+         starts_with("DATE")) %>% 
+  magrittr::set_colnames(value = tolower(colnames(.)))
+```
+
+
