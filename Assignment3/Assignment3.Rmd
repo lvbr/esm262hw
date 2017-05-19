@@ -1,0 +1,165 @@
+---
+title: "Assignment 3 ggplot"
+author: "Lina Barbosa"
+date: "5/18/2017"
+output: 
+  pdf_document: 
+    fig_caption: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load packages, echo=FALSE}
+suppressPackageStartupMessages({
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(gridExtra)
+library(ggExtra)
+library(lubridate)
+})
+```
+
+# Loadig Data
+
+I've used the following data sets: sierraclim, resthin.shallow, and resthin.deep. I've merged resthin.shallow and resthin.deep to obtain one single data base, which I've called thin_data
+
+
+```{r loading data, echo=TRUE}
+other <-  data.frame(month = seq (1,12),
+                      month_names = month.abb,
+                      season =c("Fall","Fall","Winter","Winter","Winter",
+                                "Spring","Spring","Spring","Summer","Summer",
+                                "Summer","Fall")) 
+
+climate_Data <- read.table("./data/sierraclim.txt", header= T) %>%
+  left_join(other) 
+
+thinshallow <- read.table("./data/resthin.shallow.txt", header = T) %>% 
+plyr::rename(c(trans = "transhallow", 
+               evap = "evapshallow", 
+               psn = "psnshallow", 
+               plantc = "plantshallow"))
+
+thin_data <- read.table("./data/resthin.deep.txt", header = T) %>% 
+plyr::rename(c(trans = "transdeep", 
+               evap = "evapdeep", 
+               psn = "psndeep", 
+               plantc = "plantdeep")) %>% 
+  left_join(thinshallow, by = c("scen","thin","shared","day","month","wy"))
+```
+
+```{r}
+get_legend<-function(myggplot){
+  tmp <- ggplot_gtable(ggplot_build(myggplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+}
+```
+
+
+# Plot 1 
+
+```{r}
+biomass_Pery1 <-  thin_data %>%
+  select(scen, thin,  plantdeep, plantshallow) %>%
+  gather(type, biomass, 3:4) %>%
+  filter(thin == .05) 
+
+A <- ggplot(biomass_Pery1, aes(as.factor(x = scen), y = biomass, fill = type)) +
+     geom_boxplot(col = "black") +
+     stat_summary(geom ="point", fun.y = "mean", color ="indianred1") +
+     xlab("Year") +
+     ylab("Biomass") +
+     theme_bw() +
+     removeGrid(x=TRUE, y=TRUE) + 
+     scale_fill_manual(values = c("turquoise1","turquoise4"), labels = c("Deep","Shallow"))+
+     theme(legend.direction = "horizontal") +
+     annotate ("text", x=0.8, y=6, label="A", colour="black", size=5, hjust=0.5) +
+     theme(axis.text = element_text(face ="bold", colour="black", size=9)) 
+            
+     
+legend <- get_legend(A)
+
+A <- A + 
+     theme(legend.position="none")
+
+biomass_Pery2 <-  thin_data %>%
+  select(scen, thin,  plantdeep, plantshallow) %>%
+  gather(type, biomass, 3:4) %>%
+  filter(thin == 40.00)
+
+B <- ggplot(biomass_Pery2, aes(as.factor(x = scen), y = biomass, fill = type)) +
+     geom_boxplot(col = "black") +
+     stat_summary(geom="point", fun.y = "mean", color="indianred1") +
+     xlab("Year") +
+     ylab("Biomass") +
+     theme_bw() +
+     removeGrid(x=TRUE, y=TRUE) + 
+     scale_fill_manual(values = c("turquoise1","turquoise4"), labels = c("Deep","Shallow"))+
+     theme(legend.position="none") +
+     annotate("text", x=0.8, y=6, label="B", colour="black", size=5, hjust=0.5)+
+     theme(axis.text = element_text(face ="bold", colour="black", size=9)) 
+```
+
+\clearpage
+
+```{r}
+grid.arrange(A, B, legend, ncol=2, nrow = 2,
+             layout_matrix = rbind(c(1,2), c(3,3)),
+             widths = c(2.7, 2.7), heights = c(2.5, 0.2))
+```
+
+# Plot 2
+
+```{r}
+
+temp <- climate_Data %>% 
+  select(tmin,tmax, year, month_names, season) %>% 
+  filter(year == 1960 | year == 2013)
+
+C <- ggplot(temp, aes(tmin, tmax))+
+  geom_point(aes(shape = factor(season),colour = factor(year))) +
+  xlab("Minimum Temperature (°C)") +
+  ylab("Maximum Temperature (°C)") +
+  theme_bw() +
+  removeGrid(x=TRUE, y=TRUE) +
+  labs(shape = "Season", colour = "Year")+
+  scale_color_manual(values=c("lightsteelblue4", "orange2")) +
+  theme(legend.box = "horizontal",legend.text = element_text(size = 9, face = "bold")) +
+  theme(legend.title = element_text(face = "bold")) +
+  theme(axis.text = element_text(face ="bold", colour="black", size=9))
+ 
+legend2 <- get_legend(C)
+
+C <- C +  theme(legend.position="none")
+  
+D <- ggplot(temp, aes(tmin))+
+  geom_density(aes(fill=factor(year)), size = 0.8, alpha =0.5 ) +
+  xlab("Minimum Temperature (°C)") +
+  ylab("Frequency") +
+  theme_bw() +
+  removeGrid (x=TRUE, y=TRUE) +
+  theme(legend.position = "none") +
+  theme(axis.text = element_text(face ="bold", colour="black", size=9)) +
+  scale_fill_manual(values=c("lightsteelblue4", "orange2")) 
+
+E <- ggplot(temp, aes(tmax))+
+  geom_density(aes(fill=factor(year)), size = 0.8, alpha =0.5 ) +
+  xlab("Minimum Temperature (°C)") +
+  ylab("Frequency") +
+  theme_bw() +
+  removeGrid(x=TRUE, y=TRUE) +
+  theme(legend.position = "none") +
+  theme(axis.text = element_text(face ="bold", colour="black", size=9)) +
+  scale_fill_manual(values=c("lightsteelblue4", "orange2")) 
+  
+grid.arrange(D, legend2, C, E, ncol=2, nrow=2, 
+             widths=c(2.8, 1.8), heights=c(2.5, 3))
+```
+
+
