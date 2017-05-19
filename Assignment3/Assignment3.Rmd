@@ -160,6 +160,7 @@ E <- ggplot(temp, aes(tmax))+
   
 grid.arrange(D, legend2, C, E, ncol=2, nrow=2, 
              widths=c(2.8, 1.8), heights=c(2.5, 3))
+
 ```
 
 
