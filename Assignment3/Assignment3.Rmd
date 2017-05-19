@@ -31,9 +31,9 @@ I've used the following data sets: sierraclim, resthin.shallow, and resthin.deep
 ```{r loading data, echo=TRUE}
 other <-  data.frame(month = seq (1,12),
                       month_names = month.abb,
-                      season =c("Fall","Fall","Winter","Winter","Winter",
-                                "Spring","Spring","Spring","Summer","Summer",
-                                "Summer","Fall")) 
+                      season =c("Winter","Winter","Spring",
+                                "Spring","Spring","Summer","Summer",
+                                "Summer","Fall","Fall","Fall","Winter")) 
 
 climate_Data <- read.table("./data/sierraclim.txt", header= T) %>%
   left_join(other) 
@@ -51,6 +51,11 @@ plyr::rename(c(trans = "transdeep",
                plantc = "plantdeep")) %>% 
   left_join(thinshallow, by = c("scen","thin","shared","day","month","wy"))
 ```
+
+## Useful function 
+
+By the time I made this graph I did not know how to make functions in R so I took this one from stackoverflow
+
 
 ```{r}
 get_legend<-function(myggplot){
@@ -78,8 +83,9 @@ A <- ggplot(biomass_Pery1, aes(as.factor(x = scen), y = biomass, fill = type)) +
      theme_bw() +
      removeGrid(x=TRUE, y=TRUE) + 
      scale_fill_manual(values = c("turquoise1","turquoise4"), labels = c("Deep","Shallow"))+
-     theme(legend.direction = "horizontal") +
-     annotate ("text", x=0.8, y=6, label="A", colour="black", size=5, hjust=0.5) +
+     theme(legend.direction = "horizontal",legend.text = element_text(size = 9, face = "bold")) +
+     theme(legend.title = element_text(face = "bold")) +
+     annotate ("text", x=1.3, y=6, label="Thin = 0.05", colour="black", size=5, hjust=0.5) +
      theme(axis.text = element_text(face ="bold", colour="black", size=9)) 
             
      
@@ -102,19 +108,21 @@ B <- ggplot(biomass_Pery2, aes(as.factor(x = scen), y = biomass, fill = type)) +
      removeGrid(x=TRUE, y=TRUE) + 
      scale_fill_manual(values = c("turquoise1","turquoise4"), labels = c("Deep","Shallow"))+
      theme(legend.position="none") +
-     annotate("text", x=0.8, y=6, label="B", colour="black", size=5, hjust=0.5)+
+     annotate("text", x=1.2, y=6, label="Thin = 40", colour="black", size=5, hjust=0.5)+
      theme(axis.text = element_text(face ="bold", colour="black", size=9)) 
 ```
 
+
 \clearpage
 
-```{r}
+```{r, fig.cap = "Plant Biomass for deep and shallow locations over the period of study. Red dots incicate the biomass mean"}
+
 grid.arrange(A, B, legend, ncol=2, nrow = 2,
              layout_matrix = rbind(c(1,2), c(3,3)),
              widths = c(2.7, 2.7), heights = c(2.5, 0.2))
 ```
 
-# Plot 2
+# Plot 2 - 3
 
 ```{r}
 
@@ -150,7 +158,7 @@ D <- ggplot(temp, aes(tmin))+
 
 E <- ggplot(temp, aes(tmax))+
   geom_density(aes(fill=factor(year)), size = 0.8, alpha =0.5 ) +
-  xlab("Minimum Temperature (°C)") +
+  xlab("Maximum Temperature (°C)") +
   ylab("Frequency") +
   theme_bw() +
   removeGrid(x=TRUE, y=TRUE) +
@@ -158,9 +166,66 @@ E <- ggplot(temp, aes(tmax))+
   theme(axis.text = element_text(face ="bold", colour="black", size=9)) +
   scale_fill_manual(values=c("lightsteelblue4", "orange2")) 
   
+```
+
+
+\clearpage
+
+
+```{r, fig.cap = "Minimum Temperature (°C) vs Maximum Temperature (°C) for the years 1960 and 2013"}
 grid.arrange(D, legend2, C, E, ncol=2, nrow=2, 
              widths=c(2.8, 1.8), heights=c(2.5, 3))
+```
+
+# Plot 4
+
+```{r}
+bar_data <-  thin_data %>%
+  select(scen, thin,  plantdeep, plantshallow) %>% 
+  group_by(scen, thin) %>% 
+  summarise(Meandeep = mean(plantdeep), Mindeep = min(plantdeep), Maxdeep = max(plantdeep),
+            MeanS = mean(plantshallow), MinS = min(plantshallow), MaxS = max(plantshallow)) 
+
+tn <-  c("None","Low","Med","High")
+
+Fe <-ggplot(bar_data, aes(as.factor(x = scen), 
+                       y = Meandeep, ymin = Mindeep, ymax = Maxdeep, fill= factor(thin))) +
+                      geom_bar(stat="identity", position=position_dodge()) +
+                      geom_errorbar(stat = "identity",position=position_dodge()) +
+                      labs(title = "Deep") +
+                      xlab("Years") +
+                      ylab("Biomass") +
+                      scale_fill_brewer(type = "seq", palette = "GnBu", 
+                      name = "Thin", labels = tn) +
+                      theme_bw() +
+                      removeGrid (x=TRUE, y=TRUE) +
+                      theme(legend.text = element_text(size = 9, face = "bold")) +
+                      theme(legend.title = element_text(face = "bold")) +
+                      theme(axis.text = element_text(face ="bold", colour="black", size=9))
+ 
+                    
+
+G <-ggplot(bar_data, aes(as.factor(x = scen), 
+                     y = MeanS, ymin = MinS, ymax = MaxS, fill= factor(thin))) +
+                     geom_bar(stat="identity", position=position_dodge()) +
+                     geom_errorbar(stat = "identity",position=position_dodge()) +
+                     labs(title = "Shallow") +
+                     xlab("Years") +
+                     ylab("Biomass") +
+                     scale_fill_brewer(type = "seq", palette = "RdPu", name = "Thin",
+                     labels = tn) +
+                     theme_bw() +
+                     removeGrid (x=TRUE, y=TRUE) +
+                     theme(legend.text = element_text(size = 9, face = "bold")) +
+                     theme(legend.title = element_text(face = "bold")) +
+                     theme(axis.text = element_text(face ="bold", colour="black", size=9))
 
 ```
 
+\clearpage
+
+```{r, fig.cap= "Biomass for all thin levels in deep and shallow locations"}
+grid.arrange(Fe, G, ncol=1, nrow=2, 
+             widths= 3.5, heights=c(6, 6))
+```
 
